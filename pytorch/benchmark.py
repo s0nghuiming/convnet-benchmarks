@@ -43,7 +43,7 @@ print('Running on device: %s' % (device_name))
 def main():
     for arch, batch_size in archs.items():
         t = time.time()
-        data_, = torch.randn(batch_size, 3, 224, 224), 
+        data_ = torch.randn(batch_size, 3, 224, 224)
         target_ = torch.arange(1, batch_size + 1).long()        
         net = models.__dict__[arch]() # no need to load pre-trained weights for dummy data
         
@@ -57,7 +57,7 @@ def main():
         
         net.eval()
         
-        print('ModelType: %s, Kernels: %s Input shape: %dx3x244x244' % (
+        print('ModelType: %s, Kernels: %s Input shape: %dx3x224x224' % (
                 arch, kernel, batch_size))
         data, target = Variable(data_), Variable(target_)
         
@@ -99,10 +99,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-                
-                
-                
-                
-                
-                
-                

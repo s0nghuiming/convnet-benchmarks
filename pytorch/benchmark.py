@@ -15,10 +15,10 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-archs = {'alexnet': 128,
-         'vgg11': 64,
-         #'inception_v3': 128,
-         'resnet50': 128}
+archs = {'alexnet': [128, 3, 224, 224],
+         'vgg11': [64, 3, 224, 224],
+         'inception_v3': [128, 3, 299, 299],
+         'resnet50': [128, 3, 224, 224]}
 steps = 10 # nb of steps in loop to average perf
 nDryRuns = 10
 
@@ -41,9 +41,11 @@ print('Running on device: %s' % (device_name))
 
 
 def main():
-    for arch, batch_size in archs.items():
+    for arch, sizes in archs.items():
         t = time.time()
-        data_ = torch.randn(batch_size, 3, 224, 224)
+        batch_size, c, h, w = sizes[0], sizes[1], sizes[2], sizes[3]
+
+        data_ = torch.randn(batch_size, c, h, w)
         target_ = torch.arange(1, batch_size + 1).long()        
         net = models.__dict__[arch]() # no need to load pre-trained weights for dummy data
         
@@ -57,8 +59,8 @@ def main():
         
         net.eval()
         
-        print('ModelType: %s, Kernels: %s Input shape: %dx3x224x224' % (
-                arch, kernel, batch_size))
+        print('ModelType: %s, Kernels: %s Input shape: %dx%dx%dx%d' % (
+                arch, kernel, batch_size, c, h, w))
         data, target = Variable(data_), Variable(target_)
         
         for i in range(nDryRuns):

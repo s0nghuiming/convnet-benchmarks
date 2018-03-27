@@ -11,6 +11,8 @@ import subprocess
 parser = argparse.ArgumentParser(description='PyTorch Convnet Benchmark')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                    help='disable CUDA')
+parser.add_argument('--inference', action='store_true', default=False,
+                   help='run inference only')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -20,7 +22,7 @@ archs = {'alexnet': [128, 3, 224, 224],
          'inception_v3': [128, 3, 299, 299],
          'resnet50': [128, 3, 224, 224]}
 steps = 10 # nb of steps in loop to average perf
-nDryRuns = 10
+nDryRuns = 5
 
 
 if args.cuda:
@@ -66,9 +68,10 @@ def main():
         for i in range(nDryRuns):
             optimizer.zero_grad()   # zero the gradient buffers
             output = net(data)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()    # Does the update
+            if not args.inference:
+                loss = criterion(output, target)
+                loss.backward()
+                optimizer.step()    # Does the update
 
         time_fwd, time_bwd, time_upt = 0, 0, 0
         
@@ -77,14 +80,16 @@ def main():
             t1 = time.time()
             output = net(data)
             t2 = time.time()
-            loss = criterion(output, target)
-            loss.backward()
-            t3 = time.time()
-            optimizer.step()    # Does the update
-            t4 = time.time()
+            if not args.inference:
+                loss = criterion(output, target)
+                loss.backward()
+                t3 = time.time()
+                optimizer.step()    # Does the update
+                t4 = time.time()
             time_fwd = time_fwd + (t2 - t1)
-            time_bwd = time_bwd + (t3 - t2)
-            time_upt = time_upt + (t4 - t3)
+            if not args.inference:
+                time_bwd = time_bwd + (t3 - t2)
+                time_upt = time_upt + (t4 - t3)
         
         time_fwd_avg = time_fwd / steps * 1000
         time_bwd_avg = time_bwd / steps * 1000

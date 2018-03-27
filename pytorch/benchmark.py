@@ -13,6 +13,8 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                    help='disable CUDA')
 parser.add_argument('--inference', action='store_true', default=False,
                    help='run inference only')
+parser.add_argument('--single-batch-size', action='store_true', default=False,
+                   help='single batch size')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -46,6 +48,7 @@ def main():
     for arch, sizes in archs.items():
         t = time.time()
         batch_size, c, h, w = sizes[0], sizes[1], sizes[2], sizes[3]
+        batch_size = 1 if args.single_batch_size else batch_size
 
         data_ = torch.randn(batch_size, c, h, w)
         target_ = torch.arange(1, batch_size + 1).long()        

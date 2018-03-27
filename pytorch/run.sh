@@ -7,6 +7,12 @@ if [[ "$1" == "--inference" ]]; then
     shift
 fi
 
+if [[ "$1" == "--single" ]]; then
+    ARGS="$ARGS --single-batch-size"
+    echo "### using single batch size"
+    shift
+fi
+
 CORES=`lscpu | grep Core | awk '{print $4}'`
 SOCKETS=`lscpu | grep Socket | awk '{print $2}'`
 TOTAL_CORES=`expr $CORES \* $SOCKETS`

@@ -7,6 +7,9 @@ import torch.optim as optim
 import time
 import subprocess
 
+from mobilenet import MobileNetV2
+models.__dict__['mobilenet_v2'] = MobileNetV2
+
 # benchmark settings
 parser = argparse.ArgumentParser(description='PyTorch Convnet Benchmark')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -22,7 +25,10 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 archs = {'alexnet': [128, 3, 224, 224],
          'vgg11': [64, 3, 224, 224],
          'inception_v3': [128, 3, 299, 299],
-         'resnet50': [128, 3, 224, 224]}
+         'resnet50': [128, 3, 224, 224],
+         'squeezenet1_0': [128, 3, 224, 224],
+         'densenet121': [128, 3, 224, 224],
+         'mobilenet_v2': [128, 3, 224, 224]}
 steps = 10 # nb of steps in loop to average perf
 nDryRuns = 5
 

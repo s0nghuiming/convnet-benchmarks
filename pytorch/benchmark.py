@@ -27,7 +27,7 @@ archs = {'alexnet': [128, 3, 224, 224],
          'inception_v3': [128, 3, 299, 299],
          'resnet50': [128, 3, 224, 224],
          'squeezenet1_0': [128, 3, 224, 224],
-         'densenet121': [128, 3, 224, 224],
+         'densenet121': [32, 3, 224, 224],
          'mobilenet_v2': [128, 3, 224, 224]}
 steps = 10 # nb of steps in loop to average perf
 nDryRuns = 5

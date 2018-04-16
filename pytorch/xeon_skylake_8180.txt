@@ -1,0 +1,39 @@
+### using OMP_NUM_THREADS=56
+### using KMP_AFFINITY=granularity=fine,compact,1,0
+
+Running on device:  Intel(R) Xeon(R) Platinum 8180 CPU @ 2.50GHz
+ModelType: alexnet, Kernels: nn Input shape: 128x3x224x224
+nn                              :forward:     270.48     473.23
+nn                             :backward:     160.66
+nn                               :update:       9.05
+nn                                :total:     431.14     296.89
+ModelType: vgg11, Kernels: nn Input shape: 64x3x224x224
+nn                              :forward:    1719.43      37.22
+nn                             :backward:     715.53
+nn                               :update:      19.24
+nn                                :total:    2434.96      26.28
+ModelType: inception_v3, Kernels: nn Input shape: 128x3x299x299
+nn                              :forward:    2689.24      47.60
+nn                             :backward:    2868.74
+nn                               :update:       6.30
+nn                                :total:    5557.98      23.03
+ModelType: resnet50, Kernels: nn Input shape: 128x3x224x224
+nn                              :forward:    2780.27      46.04
+nn                             :backward:    2911.27
+nn                               :update:       4.85
+nn                                :total:    5691.55      22.49
+ModelType: squeezenet1_0, Kernels: nn Input shape: 128x3x224x224
+nn                              :forward:    1593.57      80.32
+nn                             :backward:     527.60
+nn                               :update:       0.85
+nn                                :total:    2121.17      60.34
+ModelType: densenet121, Kernels: nn Input shape: 32x3x224x224
+nn                              :forward:    1302.03      24.58
+nn                             :backward:     906.99
+nn                               :update:       4.51
+nn                                :total:    2209.02      14.49
+ModelType: mobilenet_v2, Kernels: nn Input shape: 128x3x224x224
+nn                              :forward:    2856.85      44.80
+nn                             :backward:   28442.39
+nn                               :update:       1.93
+nn                                :total:   31299.25       4.09

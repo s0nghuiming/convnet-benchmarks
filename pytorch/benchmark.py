@@ -10,6 +10,9 @@ import subprocess
 from mobilenet import MobileNetV2
 models.__dict__['mobilenet_v2'] = MobileNetV2
 
+from shufflenet import ShuffleNet
+models.__dict__['shufflenet'] = ShuffleNet
+
 # benchmark settings
 parser = argparse.ArgumentParser(description='PyTorch Convnet Benchmark')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -28,7 +31,8 @@ archs = {'alexnet': [128, 3, 224, 224],
          'resnet50': [128, 3, 224, 224],
          'squeezenet1_0': [128, 3, 224, 224],
          'densenet121': [32, 3, 224, 224],
-         'mobilenet_v2': [128, 3, 224, 224]}
+         'mobilenet_v2': [128, 3, 224, 224],
+         'shufflenet': [128, 3,224, 224]}
 steps = 10 # nb of steps in loop to average perf
 nDryRuns = 5
 

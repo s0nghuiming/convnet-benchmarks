@@ -13,6 +13,12 @@ models.__dict__['mobilenet_v2'] = MobileNetV2
 from shufflenet import ShuffleNet
 models.__dict__['shufflenet'] = ShuffleNet
 
+from unet2d import UNet
+models.__dict__['unet'] = UNet
+
+from unet3d import UNet3D
+models.__dict__['unet3d'] = UNet3D
+
 # benchmark settings
 parser = argparse.ArgumentParser(description='PyTorch Convnet Benchmark')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -25,14 +31,18 @@ parser.add_argument('--single-batch-size', action='store_true', default=False,
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-archs = {'alexnet': [128, 3, 224, 224],
-         'vgg11': [64, 3, 224, 224],
-         'inception_v3': [128, 3, 299, 299],
-         'resnet50': [128, 3, 224, 224],
-         'squeezenet1_0': [128, 3, 224, 224],
-         'densenet121': [32, 3, 224, 224],
-         'mobilenet_v2': [128, 3, 224, 224],
-         'shufflenet': [128, 3,224, 224]}
+archs = {
+    'alexnet': [128, 3, 224, 224],
+    'vgg11': [64, 3, 224, 224],
+    'inception_v3': [128, 3, 299, 299],
+    'resnet50': [128, 3, 224, 224],
+    'squeezenet1_0': [128, 3, 224, 224],
+    'densenet121': [32, 3, 224, 224],
+    'mobilenet_v2': [128, 3, 224, 224],
+    'shufflenet': [128, 3, 224, 224],
+    'unet': [32, 3, 256, 256],
+     #'unet3d': [1, 3, 128, 128, 128]
+}
 steps = 10 # nb of steps in loop to average perf
 nDryRuns = 5
 
@@ -56,11 +66,19 @@ print('Running on device: %s' % (device_name))
 
 def main():
     for arch, sizes in archs.items():
-        t = time.time()
-        batch_size, c, h, w = sizes[0], sizes[1], sizes[2], sizes[3]
+        if arch is 'unet3d':
+            batch_size, c, d, h, w = sizes[0], sizes[1], sizes[2], sizes[3], sizes[4]
+            print('ModelType: %s, Kernels: %s Input shape: %dx%dx%dx%dx%d' %
+                 (arch, kernel, batch_size, c, d, h, w))
+            data_ = torch.randn(batch_size, c, d, h, w)            
+        else:
+            batch_size, c, h, w = sizes[0], sizes[1], sizes[2], sizes[3]
+            print('ModelType: %s, Kernels: %s Input shape: %dx%dx%dx%d' %
+                 (arch, kernel, batch_size, c, h, w))
+            data_ = torch.randn(batch_size, c, h, w)
+
         batch_size = 1 if args.single_batch_size else batch_size
 
-        data_ = torch.randn(batch_size, c, h, w)
         target_ = torch.arange(1, batch_size + 1).long()        
         net = models.__dict__[arch]() # no need to load pre-trained weights for dummy data
         
@@ -73,16 +91,14 @@ def main():
             criterion = criterion.cuda()
         
         net.eval()
-        
-        print('ModelType: %s, Kernels: %s Input shape: %dx%dx%dx%d' % (
-                arch, kernel, batch_size, c, h, w))
+
         data, target = Variable(data_), Variable(target_)
         
         for i in range(nDryRuns):
             optimizer.zero_grad()   # zero the gradient buffers
             output = net(data)
             if not args.inference:
-                loss = criterion(output, target)
+                loss = output.sum() if 'unet' in arch else criterion(output, target)
                 loss.backward()
                 optimizer.step()    # Does the update
 
@@ -94,7 +110,7 @@ def main():
             output = net(data)
             t2 = time.time()
             if not args.inference:
-                loss = criterion(output, target)
+                loss = output.sum() if 'unet' in arch else criterion(output, target)
                 loss.backward()
                 t3 = time.time()
                 optimizer.step()    # Does the update

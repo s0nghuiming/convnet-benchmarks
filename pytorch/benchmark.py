@@ -34,7 +34,7 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 archs = {
     'alexnet': [128, 3, 224, 224],
     'vgg11': [64, 3, 224, 224],
-    'inception_v3': [128, 3, 299, 299],
+    'inception_v3': [32, 3, 299, 299],
     'resnet50': [128, 3, 224, 224],
     'squeezenet1_0': [128, 3, 224, 224],
     'densenet121': [32, 3, 224, 224],

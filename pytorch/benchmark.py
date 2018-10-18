@@ -40,7 +40,7 @@ archs = {
     'densenet121': [32, 3, 224, 224],
     'mobilenet_v2': [128, 3, 224, 224],
     'shufflenet': [128, 3, 224, 224],
-    'unet': [32, 3, 256, 256],
+    'unet': [32, 3, 128, 128],
      #'unet3d': [1, 3, 128, 128, 128]
 }
 steps = 10 # nb of steps in loop to average perf
@@ -50,6 +50,7 @@ nDryRuns = 5
 if args.cuda:
     import torch.backends.cudnn as cudnn
     cudnn.benchmark = True
+    cudnn.deterministic = True
     
     kernel = 'cudnn'
     p = subprocess.check_output('nvidia-smi --query-gpu=name --format=csv', 
@@ -71,9 +72,10 @@ def main():
             batch_size = 1 if args.single_batch_size else batch_size
             print('ModelType: %s, Kernels: %s Input shape: %dx%dx%dx%dx%d' %
                  (arch, kernel, batch_size, c, d, h, w))
-            data_ = torch.randn(batch_size, c, d, h, w)            
+            data_ = torch.randn(batch_size, c, d, h, w)
         else:
             batch_size, c, h, w = sizes[0], sizes[1], sizes[2], sizes[3]
+            batch_size = 64 if arch is 'resnet50' else batch_size
             batch_size = 1 if args.single_batch_size else batch_size
             print('ModelType: %s, Kernels: %s Input shape: %dx%dx%dx%d' %
                  (arch, kernel, batch_size, c, h, w))
@@ -89,8 +91,12 @@ def main():
             data_, target_ = data_.cuda(), target_.cuda()
             net.cuda()
             criterion = criterion.cuda()
-        
-        net.eval()
+
+        if args.inference:
+            net.eval()
+        else:
+            net.train()
+            net.aux_logits = False
 
         data, target = Variable(data_), Variable(target_)
 
@@ -98,7 +104,7 @@ def main():
             optimizer.zero_grad()   # zero the gradient buffers
             output = net(data)
             if not args.inference:
-                loss = output.sum() if 'unet' in arch else criterion(output, target)
+                loss = output.sum() / 1e6 if 'unet' in arch else criterion(output, target)
                 loss.backward()
                 optimizer.step()    # Does the update
 
@@ -110,7 +116,7 @@ def main():
             output = net(data)
             t2 = time.time()
             if not args.inference:
-                loss = output.sum() if 'unet' in arch else criterion(output, target)
+                loss = output.sum() / 1e6 if 'unet' in arch else criterion(output, target)
                 loss.backward()
                 t3 = time.time()
                 optimizer.step()    # Does the update

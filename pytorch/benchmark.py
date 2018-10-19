@@ -27,6 +27,8 @@ parser.add_argument('--inference', action='store_true', default=False,
                    help='run inference only')
 parser.add_argument('--single-batch-size', action='store_true', default=False,
                    help='single batch size')
+parser.add_argument('--print-iteration-time', action='store_true', default=False,
+                   help='print iteration time')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -64,6 +66,9 @@ else:
 
 print('Running on device: %s' % (device_name))
 
+def sync_gpu():
+    if args.cuda and args.inference:
+        torch.cuda.synchronize()
 
 def main():
     for arch, sizes in archs.items():
@@ -75,7 +80,7 @@ def main():
             data_ = torch.randn(batch_size, c, d, h, w)
         else:
             batch_size, c, h, w = sizes[0], sizes[1], sizes[2], sizes[3]
-            batch_size = 64 if arch is 'resnet50' else batch_size
+            batch_size = 64 if arch is 'resnet50' and args.inference else batch_size
             batch_size = 1 if args.single_batch_size else batch_size
             print('ModelType: %s, Kernels: %s Input shape: %dx%dx%dx%d' %
                  (arch, kernel, batch_size, c, h, w))
@@ -112,8 +117,10 @@ def main():
         
         for i in range(steps):
             optimizer.zero_grad()   # zero the gradient buffers
+            sync_gpu()
             t1 = time.time()
             output = net(data)
+            sync_gpu()
             t2 = time.time()
             if not args.inference:
                 loss = output.sum() / 1e6 if 'unet' in arch else criterion(output, target)
@@ -122,6 +129,8 @@ def main():
                 optimizer.step()    # Does the update
                 t4 = time.time()
             time_fwd = time_fwd + (t2 - t1)
+            if args.print_iteration_time:
+                print("%-30s %d: %10.2f ms" % ('forward iteration', i, (t2-t1)*1000))
             if not args.inference:
                 time_bwd = time_bwd + (t3 - t2)
                 time_upt = time_upt + (t4 - t3)
@@ -133,10 +142,10 @@ def main():
         # update not included!
         time_total = time_fwd_avg + time_bwd_avg
     
-        print("%-30s %10s %10.2f %10.2f" % (kernel, ':forward:', time_fwd_avg, batch_size*1000/time_fwd_avg))
-        print("%-30s %10s %10.2f" % (kernel, ':backward:', time_bwd_avg))
-        print("%-30s %10s %10.2f" % (kernel, ':update:', time_upt_avg))
-        print("%-30s %10s %10.2f %10.2f" % (kernel, ':total:', time_total, batch_size*1000/time_total))
+        print("%-30s %10s %10.2f (ms) %10.2f (imgs/s)" % (kernel, ':forward:', time_fwd_avg, batch_size*1000/time_fwd_avg))
+        print("%-30s %10s %10.2f (ms)" % (kernel, ':backward:', time_bwd_avg))
+        print("%-30s %10s %10.2f (ms)" % (kernel, ':update:', time_upt_avg))
+        print("%-30s %10s %10.2f (ms) %10.2f (imgs/s)" % (kernel, ':total:', time_total, batch_size*1000/time_total))
         
 
 if __name__ == '__main__':

@@ -19,19 +19,6 @@ models.__dict__['unet'] = UNet
 from unet3d import UNet3D
 models.__dict__['unet3d'] = UNet3D
 
-# benchmark settings
-parser = argparse.ArgumentParser(description='PyTorch Convnet Benchmark')
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                   help='disable CUDA')
-parser.add_argument('--inference', action='store_true', default=False,
-                   help='run inference only')
-parser.add_argument('--single-batch-size', action='store_true', default=False,
-                   help='single batch size')
-parser.add_argument('--print-iteration-time', action='store_true', default=False,
-                   help='print iteration time')
-
-args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 archs = {
     'alexnet': [128, 3, 224, 224],
@@ -45,9 +32,30 @@ archs = {
     'unet': [32, 3, 128, 128],
      #'unet3d': [1, 3, 128, 128, 128]
 }
+
+archs_list = list(archs.keys())
 steps = 10 # nb of steps in loop to average perf
 nDryRuns = 5
 
+# benchmark settings
+parser = argparse.ArgumentParser(description='PyTorch Convnet Benchmark')
+parser.add_argument('--arch',  action='store', default='alexnet',
+                   choices=archs_list,
+                   help='arch, can be alexnet, vgg11, inception_v3, resnet50\
+                         squeezenet1_0, densenet121, mobilenet_v2')
+parser.add_argument('--no-cuda', action='store_true', default=False,
+                   help='disable CUDA')
+parser.add_argument('--inference', action='store_true', default=False,
+                   help='run inference only')
+parser.add_argument('--single-batch-size', action='store_true', default=False,
+                   help='single batch size')
+parser.add_argument('--print-iteration-time', action='store_true', default=False,
+                   help='print iteration time')
+
+args = parser.parse_args()
+args.cuda = not args.no_cuda and torch.cuda.is_available()
+
+arch_dict = {args.arch: archs[args.arch]}
 
 if args.cuda:
     import torch.backends.cudnn as cudnn
@@ -71,7 +79,7 @@ def sync_gpu():
         torch.cuda.synchronize()
 
 def main():
-    for arch, sizes in archs.items():
+    for arch, sizes in arch_dict.items():
         if arch is 'unet3d':
             batch_size, c, d, h, w = sizes[0], sizes[1], sizes[2], sizes[3], sizes[4]
             batch_size = 1 if args.single_batch_size else batch_size
